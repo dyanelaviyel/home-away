@@ -1,1 +1,1 @@
-# home-away
+# Home Away is a mobile application for individuals, specifically students and workers, who live away from home. It provides a convenient platform for searching affordable and available dormitories, apartments, or boarding houses near the user's target area, efficiently connecting landlords and tenants.
