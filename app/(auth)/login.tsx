@@ -36,8 +36,8 @@
           throw new Error('Authentication failed. Please try again.');
         }
 
-          // ✅ Check if email is confirmed
-                try {
+          //Check if email is confirmed
+        try {
           const { data: userData, error } = await supabase.auth.getUser();
 
           if (error) {

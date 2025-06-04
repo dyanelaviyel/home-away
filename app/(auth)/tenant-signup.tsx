@@ -52,9 +52,6 @@ export default function TenantSignUp() {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-        emailRedirectTo: 'http://localhost:3000/confirmed',
-      }
       });
 
       if (error) {
