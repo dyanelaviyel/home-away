@@ -98,6 +98,18 @@
       }
     };
 
+    async function sendPasswordResetEmail(email: string) {
+      const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: 'https://reset-page-janellas-projects-deef3e64.vercel.app/', 
+      });
+
+      if (error) {
+        Alert.alert('Error', error.message);
+      } else {
+        Alert.alert('Success', 'Password reset email sent! Check your inbox.');
+      }
+    }
+
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.rectangle}>
@@ -127,6 +139,9 @@
               </TouchableOpacity>
               <Text style={styles.checkboxLabel}>Remember Me</Text>
             </View>
+            <TouchableOpacity onPress={() => sendPasswordResetEmail(email)}>
+              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+            </TouchableOpacity>
           </View>
 
           <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
@@ -267,12 +282,6 @@ const styles = StyleSheet.create({
       backgroundColor: '#D12E2E',
     },
   
-    forgotPassword: {
-      fontFamily: 'Inter',
-      fontSize: 12,
-      color: '#909090',
-    },
-  
     loginButton: {
       width: '35%',
       height: 50,
@@ -383,6 +392,13 @@ const styles = StyleSheet.create({
       top: '50%',
       justifyContent: 'center',
       alignItems: 'center',
-    }
-  
+    },
+
+    forgotPasswordText: {
+      color: '#909090',
+      textAlign: 'right',
+      marginRight: 10,
+      fontSize: 12,
+      fontFamily: 'Inter', 
+    },
   });
