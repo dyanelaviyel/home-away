@@ -21,82 +21,73 @@
     };
 
     const handleLogin = async () => {
-      if (!email || !password) {
-        alert('Please fill in all fields');
-        return;
-      }
-    
+  if (!email || !password) {
+    Alert.alert('Missing Fields', 'Please fill in both email and password.');
+    return;
+  }
+
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (error || !data?.user) {
+      Alert.alert(
+        'Authentication Failed',
+        'You havent confirmed your email yet or entered a wrong email/password'
+      );
+      return;
+      //throw new Error('Authentication failed. Please try again.');
+      
+    }
+
+    const user = data.user;
+
+    if (!user.email_confirmed_at) {
+      Alert.alert(
+        'Authentication Failed',
+        'You entered a wrong password/email or havent confirmed your email yet.'
+      );
+      return;
+    }
+
+    console.log('Email confirmed on:', user.email_confirmed_at);
+
+    // ✅ Send OTP via Supabase Edge Function
+    const response = await fetch('https://mcotdjwbuonaekscxbxa.supabase.co/functions/v1/send-otp', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userId: user.id,
+        email: user.email,
+      }),
+    });
+
+    if (!response.ok) {
+      let errorMsg = 'Failed to send OTP.';
       try {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-    
-        if (error || !data?.user) {
-          throw new Error('Authentication failed. Please try again.');
-        }
+        const errorResponse = await response.json();
+        errorMsg = errorResponse.error || errorMsg;
+      } catch (_) {}
+      console.error('OTP send error:', errorMsg);
+      Alert.alert('Error', errorMsg);
+      return;
+    }
 
-          //Check if email is confirmed
-        try {
-          const { data: userData, error } = await supabase.auth.getUser();
+    // ✅ Navigate to OTP verification screen
+    router.push({
+      pathname: '/verify-otp',
+      params: {
+        userId: user.id,
+        email: user.email,
+      },
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    Alert.alert('Login Error', error instanceof Error ? error.message : 'Something went wrong.');
+  }
+};
 
-          if (error) {
-            console.error('Error fetching user:', error.message);
-            Alert.alert('Error', 'Unable to verify email confirmation status.');
-            return;
-          }
-
-          const confirmedAt = userData?.user?.email_confirmed_at;
-
-          if (!confirmedAt) {
-            Alert.alert(
-              'Email Not Confirmed',
-              'Please check your email and confirm your account before continuing.'
-            );
-            return;
-          }
-
-          // Email is confirmed, continue with the login logic here
-          console.log('Email confirmed on:', confirmedAt);
-
-        } catch (err) {
-          console.error('Unexpected error checking email confirmation:', err);
-          Alert.alert('Error', 'Something went wrong. Please try again later.');
-        }
-
-    
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('kindofuser')
-          .eq('id', data.user.id)
-          .single();
-    
-        if (profileError || !profileData?.kindofuser) {
-          throw new Error('User profile not found. Please contact support.');
-        }
-    
-        const userType = profileData.kindofuser.toLowerCase();
-        console.log('User type:', userType);
-    
-        // Navigate based on user type
-        if (userType === 'landlord') {
-          router.replace('/(tabs)/landlord/upload'); // Navigate to landlord explore
-        } else if (userType === 'tenant') {
-          router.replace('/(tabs)/tenant/explore'); // Navigate to tenant explore
-        } else {
-          alert('Unauthorized user type. Please log in with the correct account.');
-        }
-      } catch (error) {
-        // Properly handle 'unknown' type
-        if (error instanceof Error) {
-          console.error('Error during login:', error.message);
-          alert(error.message || 'Login failed. Please try again.');
-        } else {
-          console.error('Unexpected error:', error);
-          alert('An unexpected error occurred. Please try again.');
-        }
-      }
-    };
 
     async function sendPasswordResetEmail(email: string) {
       const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
