@@ -4,6 +4,8 @@ import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { supabase } from '@/supabaseClient';
 import { NavigationProp } from '@react-navigation/native';
+import { router } from 'expo-router';
+
 const { width, height } = Dimensions.get('screen');
 type RootStackParamList = {
   Login: undefined;
@@ -44,39 +46,55 @@ export default function LoginSecurity() {
   };
 
   const handleDeleteAccount = async () => {
-    Alert.alert(
-      'Delete Account',
-      'Are you sure you want to delete your account? This action cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const { data: { user } } = await supabase.auth.getUser();
-              if (!user) return;
-
-              const { error: profileError } = await supabase
-                .from('profiles')
-                .delete()
-                .eq('id', user.id);
-
-              if (profileError) throw profileError;
-
-              await supabase.auth.signOut();
-              navigation.reset({
-                index: 0,
-                routes: [{ name: 'Login' }],
-              });
-            } catch (error) {
-              Alert.alert('Error', 'Failed to delete account');
+  Alert.alert(
+    'Delete Account',
+    'Are you sure you want to delete your account? This action cannot be undone.',
+    [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            const { data: { user }, error: userError } = await supabase.auth.getUser();
+            if (userError || !user) {
+              console.error('Error getting user:', userError?.message);
+              Alert.alert('Error', 'Could not get current user.');
+              return;
             }
-          },
+
+            const { error: profileError } = await supabase
+              .from('profiles')
+              .delete()
+              .eq('id', user.id);
+
+            if (profileError) {
+              console.error('Error deleting profile:', profileError.message);
+              Alert.alert('Error', 'Failed to delete user profile from database.');
+              return;
+            }
+
+            console.log(`✅ Profile with ID ${user.id} deleted from database.`);
+
+            const { error: signOutError } = await supabase.auth.signOut();
+            if (signOutError) {
+              console.error('Sign-out error:', signOutError.message);
+              Alert.alert('Error', 'Sign-out failed.');
+              return;
+            }
+
+            console.log('✅ Signed out successfully. Redirecting to login...');
+            router.replace('/(auth)/login'); // Make sure this path exists
+          } catch (error: any) {
+            console.error('Unexpected error during account deletion:', error);
+            Alert.alert('Error', 'Unexpected error deleting account.');
+          }
         },
-      ]
-    );
-  };
+      },
+    ]
+  );
+};
+
 
   return (
     <View style={styles.container}>

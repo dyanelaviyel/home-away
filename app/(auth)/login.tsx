@@ -75,13 +75,14 @@
     }
 
     // ✅ Navigate to OTP verification screen
-    router.push({
-      pathname: '/verify-otp',
-      params: {
-        userId: user.id,
-        email: user.email,
-      },
-    });
+      router.push({
+        pathname: '/verify-otp',
+        params: {
+          userId: user.id,
+          email: user.email,
+        },
+      });
+
   } catch (error) {
     console.error('Login error:', error);
     Alert.alert('Login Error', error instanceof Error ? error.message : 'Something went wrong.');

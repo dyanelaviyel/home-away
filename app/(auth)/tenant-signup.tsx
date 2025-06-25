@@ -17,6 +17,8 @@ export default function TenantSignUp() {
   const [address, setAddress] = useState('');
   const [password, setPassword] = useState('');
   const [isChecked, setIsChecked] = useState<boolean>(false);
+  const [showPassword, setShowPassword] = useState(false);
+
 
   const toggleCheckbox = () => {
     setIsChecked(!isChecked);
@@ -43,9 +45,19 @@ export default function TenantSignUp() {
       return;
     }
 
+    const strongPasswordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
+
+      if (!strongPasswordRegex.test(password)) {
+        Alert.alert(
+          'Weak Password',
+          'Password must be at least 8 characters and include:\n• One uppercase letter\n• One number\n• One special character'
+        );
+        return;
+      }
+
     try {
 
-      const redirectUrl = Linking.createURL('auth/callback');
+      const redirectUrl = Linking.createURL('https://hoomeaway-confirmation.vercel.app/?fbclid=IwY2xjawLBZfRleHRuA2FlbQIxMABicmlkETFoTm4wendURGRGeGtOeEZZAR7z-HBlJKVBvkL7_lNOUfKPpI4dOddPXVJoTryzSZcO1B8QyuuRIUd7I4rbZg_aem_vRE7cUtI_Ig52AV6qGIXrw');
       console.log('Redirect URL for Supabase:', redirectUrl);
 
       // Sign up the user with email and password
@@ -80,7 +92,7 @@ export default function TenantSignUp() {
         }
 
 
-        Alert.alert('Success', 'Account created successfully!');
+        Alert.alert('Success', 'Account created successfully! Check your email for confirmation.');
         // After successful signup, redirect to the login page
         router.push('/(auth)/login');
       } else {
@@ -97,7 +109,7 @@ export default function TenantSignUp() {
       <View style={styles.rectangle}>
         <Text style={styles.title}>SIGN UP</Text>
         <Text style={styles.subtitle}>TENANT</Text>
-
+        
         <TextInput
           style={styles.inputText}
           placeholder="Last Name"
@@ -133,15 +145,19 @@ export default function TenantSignUp() {
           value={address}
           onChangeText={setAddress}
         />
-        <TextInput
-          style={styles.inputText}
-          placeholder="Password"
-          placeholderTextColor="#909090"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
-
+        <View style={styles.passwordContainer}>
+          <TextInput
+            style={styles.inputWithIcon}
+            placeholder="Password"
+            placeholderTextColor="#909090"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={!showPassword}
+          />
+          <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
+            <Icon name={showPassword ? 'eye' : 'eyeo'} size={20} color="#333" />
+          </TouchableOpacity>
+        </View>
         <View style={styles.checkboxContainer}>
           <TouchableOpacity
             style={[styles.checkBox, isChecked && styles.checkboxChecked]}
@@ -283,6 +299,30 @@ const styles=StyleSheet.create({
     fontWeight: 'bold',
     fontFamily: 'Inter',
     fontSize: 14,
-  }
+  },
 
+  passwordContainer: {
+  width: '80%',
+  position: 'relative',
+  justifyContent: 'center',
+  marginTop: 20,
+},
+
+inputWithIcon: {
+  width: '100%',
+  padding: 13,
+  paddingRight: 45, // leave space for the eye icon
+  borderWidth: 1,
+  borderColor: '#D12E2E',
+  borderRadius: 10,
+  backgroundColor: '#fff',
+  fontFamily: 'Inter',
+  elevation: 3,
+},
+
+eyeIcon: {
+  position: 'absolute',
+  right: 15,
+  top: 16,
+},
 })

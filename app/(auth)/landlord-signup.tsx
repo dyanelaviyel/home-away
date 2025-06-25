@@ -15,6 +15,7 @@ import {
 import { useRouter } from 'expo-router';
 import Icon from 'react-native-vector-icons/AntDesign';
 import { supabase } from '@/supabaseClient';
+import * as Linking from 'expo-linking';
 
 const { width, height } = Dimensions.get('screen');
 
@@ -29,7 +30,7 @@ export default function LandlordSignUp() {
   const [fb_link, setFbLink] = useState('');
   const [password, setPassword] = useState('');
   const [isChecked, setIsChecked] = useState<boolean>(false);
-
+  const [showPassword, setShowPassword] = useState(false);
   const toggleCheckbox = () => {
     setIsChecked(!isChecked);
   };
@@ -46,7 +47,21 @@ export default function LandlordSignUp() {
       return;
     }
 
+        const strongPasswordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
+    
+          if (!strongPasswordRegex.test(password)) {
+            Alert.alert(
+              'Weak Password',
+              'Password must be at least 8 characters and include:\n• One uppercase letter\n• One number\n• One special character'
+            );
+            return;
+          }
+
     try {
+
+      const redirectUrl = Linking.createURL('https://hoomeaway-confirmation.vercel.app/?fbclid=IwY2xjawLBZfRleHRuA2FlbQIxMABicmlkETFoTm4wendURGRGeGtOeEZZAR7z-HBlJKVBvkL7_lNOUfKPpI4dOddPXVJoTryzSZcO1B8QyuuRIUd7I4rbZg_aem_vRE7cUtI_Ig52AV6qGIXrw');
+      console.log('Redirect URL for Supabase:', redirectUrl);
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -86,23 +101,20 @@ export default function LandlordSignUp() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={0}>
-      
+      <KeyboardAvoidingView 
+          style={{ flex: 1, backgroundColor: '#FFFFFF' }}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          keyboardVerticalOffset={0}>
+
           <View style={styles.rectangle}>
             <Text style={styles.title}>SIGN UP</Text>
             <Text style={styles.subtitle}>LANDLORD</Text>
 
-            <ScrollView style={styles.rectangle}
-              contentContainerStyle={{
-                alignItems: 'center',
-                justifyContent: 'center',
-                paddingBottom: 120,
-                paddingHorizontal: 20
-              }}
-              showsVerticalScrollIndicator={true}>
+            <ScrollView 
+                style={styles.whitecontainer}
+                showsVerticalScrollIndicator={false}
+                bounces={false}
+              >
 
             <TextInput
               style={styles.inputText}
@@ -146,14 +158,19 @@ export default function LandlordSignUp() {
               value={fb_link}
               onChangeText={setFbLink}
             />
-            <TextInput
-              style={styles.inputText}
-              placeholder="Password"
-              placeholderTextColor="#909090"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={styles.inputWithIcon}
+                placeholder="Password"
+                placeholderTextColor="#909090"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+              />
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
+                <Icon name={showPassword ? 'eye' : 'eyeo'} size={20} color="#333" />
+              </TouchableOpacity>
+            </View>
 
             <View style={styles.checkboxContainer}>
               <TouchableOpacity
@@ -193,6 +210,13 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     flexGrow: 1,
+  },
+  whitecontainer: {
+    height: height * 1,
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    padding: 20,
   },
   rectangle: {
     height: height * 1,
@@ -291,5 +315,30 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontFamily: 'Inter',
     fontSize: 14,
-  }
+  },
+
+  passwordContainer: {
+  width: '80%',
+  position: 'relative',
+  justifyContent: 'center',
+  marginTop: 20,
+},
+
+inputWithIcon: {
+  width: '100%',
+  padding: 13,
+  paddingRight: 45, // leave space for the eye icon
+  borderWidth: 1,
+  borderColor: '#D12E2E',
+  borderRadius: 10,
+  backgroundColor: '#fff',
+  fontFamily: 'Inter',
+  elevation: 3,
+},
+
+eyeIcon: {
+  position: 'absolute',
+  right: 15,
+  top: 16,
+},
 });
